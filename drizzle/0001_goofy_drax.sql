@@ -1,0 +1,1 @@
+CREATE INDEX `idx_incidents_resource_status` ON `incidents` (`resource_id`,`status`);

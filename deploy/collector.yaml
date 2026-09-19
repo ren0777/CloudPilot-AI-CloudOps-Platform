@@ -1,0 +1,35 @@
+# Lab collector only. No host mounts or cluster privileges.
+# psutil readings inside a container are not reliable per-pod utilization.
+# Use node-exporter/metrics-server for production Kubernetes telemetry.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cloudpilot-collector
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: cloudpilot-collector}
+  template:
+    metadata:
+      labels: {app: cloudpilot-collector}
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - name: collector
+          image: cloudpilot-collector:local
+          imagePullPolicy: Never
+          envFrom:
+            - secretRef: {name: cloudpilot-collector-config}
+          env:
+            - {name: RESOURCE_ID, value: k8s-lab-probe}
+            - {name: RESOURCE_NAME, value: k8s-lab-probe}
+            - {name: REGION, value: local-cluster}
+          resources:
+            requests: {cpu: 25m, memory: 32Mi}
+            limits: {cpu: 100m, memory: 96Mi}
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 10001
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: [ALL]}
